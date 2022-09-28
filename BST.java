@@ -112,7 +112,7 @@ public class BST<T extends Comparable<? super T>> {
                 current.setRight(new BSTNode<>(data));
                 size++;
             } else {
-                addR(current.getRight(),data);
+                addR(current.getRight(), data);
             }
         }
     }
@@ -152,156 +152,59 @@ public class BST<T extends Comparable<? super T>> {
             throw new NoSuchElementException("Cannot find data");
         }
 
-        BSTNode<T> nodeToRemove = null;
-        T removed = null;
-        if (root.getData().equals(data)) {
-            BSTNode<T> sucParent;
-            removed = root.getData();
-            // no children
-            if (root.getRight() == null && root.getLeft() == null) {
-                root = null;
-                // right child
-            } else if (root.getLeft() == null) {
-                root = root.getRight();
-                // left child
-            } else if (root.getRight() == null) {
-                root = root.getLeft();
-            } else { // both children
-                if (root.getRight().getLeft() == null) {
-                    sucParent = root;
-                    root.setData(sucParent.getRight().getData());
-                    sucParent.setRight(sucParent.getRight().getRight());
-                } else {
-                    sucParent = findSuccessor(root.getRight());
-                    root.setData(sucParent.getLeft().getData());
-                    sucParent.setLeft(sucParent.getLeft().getRight());
-                }
-            }
-            size--;
-            return removed;
-        }
-        BSTNode<T> parent = findParent(data);
-        if (parent == null) {
-            throw new NoSuchElementException("Cannot find node to remove");
-        }
-        // if node to remove is left child,
-        // System.out.println(parent.getLeft());
-        if (parent.getLeft() != null
-            && parent.getLeft().getData().equals(data)) {
-            nodeToRemove = parent.getLeft();
-            removed = nodeToRemove.getData();
-            // if node to remove has no children, set parent's child to null
-            if (nodeToRemove.getLeft() == null
-                && nodeToRemove.getRight() == null) {
-                parent.setLeft(null);
-            // if node to remove has right child, set parent's child to right
-            } else if (nodeToRemove.getLeft() == null) {
-                System.out.println(nodeToRemove.getRight());
-                parent.setLeft(nodeToRemove.getRight());
-                // if node to remove has left child, set paren'ts child to left
-            } else if (nodeToRemove.getRight() == null) {
-                parent.setLeft(nodeToRemove.getLeft());
-                // node has both children, find successor or predecessor
-            } else {
-                BSTNode<T> sucParent;
-                if (nodeToRemove.getRight().getLeft() == null) {
-                    sucParent = nodeToRemove;
-                    parent.getLeft().setData(sucParent.getRight().getData());
-                    sucParent.setRight(sucParent.getRight().getRight());
-                } else {
-                    sucParent = findSuccessor(nodeToRemove.getRight());
-                    parent.getLeft().setData(sucParent.getLeft().getData());
-                    sucParent.setLeft(sucParent.getLeft().getRight());
-                }
-            }
-            // if node to remove is right child
-        } else if (parent.getRight() != null
-            && parent.getRight().getData().equals(data)) {
-            nodeToRemove = parent.getRight();
-            removed = nodeToRemove.getData();
-            // if node to remove has no children, set parent's child to null
-            if (nodeToRemove.getLeft() == null
-                && nodeToRemove.getRight() == null) {
-                parent.setRight(null);
-            // if node to remove has right child, set parent's child to right
-            } else if (nodeToRemove.getLeft() == null) {
-                parent.setRight(nodeToRemove.getRight());
-                // if node to remove has left child, set paren'ts child to left
-            } else if (nodeToRemove.getRight() == null) {
-                parent.setRight(nodeToRemove.getLeft());
-                // node has both children, find successor or predecessor
-            } else {
-                BSTNode<T> sucParent;
-                if (nodeToRemove.getRight().getLeft() == null) {
-                    sucParent = nodeToRemove;
-                    parent.getRight().setData(sucParent.getRight().getData());
-                    sucParent.setRight(sucParent.getRight().getRight());
-                } else {
-                    sucParent = findSuccessor(nodeToRemove.getRight());
-                    parent.getRight().setData(sucParent.getLeft().getData());
-                    sucParent.setLeft(sucParent.getLeft().getRight());
-                }
-            }
-        }
-        if (removed == null) {
-            throw new NoSuchElementException("Cannot find data to remove");
-        }
-        size--;
-        return removed;
+        BSTNode<T> dummy = new BSTNode<>(null);
+        root = removeR(root, data, dummy);
+        return dummy.getData();
     }
 
     /**
-     * Find the next largest value (successor)'s parent, recursively.
+     * Recursively removes the node and stores data in dummy node.
+     * 
      * @param current the current node
-     * @return the node that is the parent of the successor
+     * @param data the data of the node to remove
+     * @param dummy the node to store removed data
+     * @return the current node
      */
-    private BSTNode<T> findSuccessor(BSTNode<T> current) {
-        if (current.getLeft().getLeft() == null) {
-            return current;
+    private BSTNode<T> removeR(BSTNode<T> current, T data, BSTNode<T> dummy) {
+        if (current == null) {
+            throw new NoSuchElementException("Cannot find data");
+        } else if (current.getData().compareTo(data) > 0) {
+            current.setLeft(removeR(current.getLeft(), data, dummy));
+        } else if (current.getData().compareTo(data) < 0) {
+            current.setRight(removeR(current.getRight(), data, dummy));
         } else {
-            return findSuccessor(current.getLeft());
+            dummy.setData(current.getData());
+            size--;
+            if (current.getLeft() == null && current.getRight() == null) {
+                return null;
+            } else if (current.getLeft() == null) {
+                return current.getRight();
+            } else if (current.getRight() == null) {
+                return current.getLeft();
+            } else {
+                BSTNode<T> sucDummy = new BSTNode<>(null);
+                current.setRight(sucR(current.getRight(), sucDummy));
+                current.setData(sucDummy.getData());
+            }
         }
+        return current;
     }
 
     /**
-     * Find the parent of the node with the given data.
-     * @param data the data in the node whose parent is to be found
-     * @return the parent of the node whose parent is to be found
+     * recursively finds the successor and removes it.
+     * 
+     * @param current the current node
+     * @param dummy the node to store the successor's data
+     * @return the successor's right child
      */
-    private BSTNode<T> findParent(T data) {
-        BSTNode<T> current = root;
-
-        // while current has children
-        while (current.getLeft() != null || current.getRight() != null) {
-            // if less than current
-            if (data.compareTo(current.getData()) < 0) {
-                // if no left child, error
-                if (current.getLeft() == null) {
-                    return null;
-                }
-                // if found parent, return
-                if (current.getLeft().getData().compareTo(data) == 0) {
-                    return current;
-                }
-                // not found parent, go left
-                current = current.getLeft();
-                // more than current
-            } else if (data.compareTo(current.getData()) > 0) {
-                // no more on the right, error
-                if (current.getRight() == null) {
-                    return null;
-                }
-                // found parent, return
-                if (current.getRight().getData().compareTo(data) == 0) {
-                    // foudn parent of node to remove
-                    return current;
-                }
-                // continue to the right
-                current = current.getRight();
-            }
+    private BSTNode<T> sucR(BSTNode<T> current, BSTNode<T> dummy) {
+        if (current.getLeft() == null) {
+            dummy.setData(current.getData());
+            return current.getRight();
+        } else {
+            current.setLeft(sucR(current.getLeft(), dummy));
         }
-        return null;
-
+        return current; // doesnt reach ?
     }
 
     /**
